@@ -14,7 +14,7 @@ import { AssetService } from './usecase/asset.service';
 
 export const handler: APIGatewayProxyHandlerV2 = async (event: APIGatewayProxyEventV2) => {
   let body;
-  let statusCode = 200;
+  let statusCode = StatusCodes.OK;
   const headers = {
     'Content-Type': 'application/json'
   };
