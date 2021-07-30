@@ -1,4 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyHandlerV2 } from 'aws-lambda';
+import { StatusCodes } from 'http-status-codes';
+import { ErrorCodes, ErrorMessages } from './consts/errors.enum';
 import { AssetCountryMongo } from './infra/repositories/mongodb/repos/asset-country.mongo';
 import { AssetDividendMongo } from './infra/repositories/mongodb/repos/asset-dividend.mongo';
 import { AssetPriceMongo } from './infra/repositories/mongodb/repos/asset-price.mongo';
@@ -48,8 +50,13 @@ export const handler: APIGatewayProxyHandlerV2 = async (event: APIGatewayProxyEv
       throw new Error(`Unsupported route: "${routeKey}"`);
     }
   } catch (error) {
-    statusCode = 400;
-    body = error.message;
+    statusCode = error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+    body = {
+      error: {
+        code: error.code || ErrorCodes.INTERNAL_SERVER_ERROR,
+        message: error.message || ErrorMessages.INTERNAL_SERVER_ERROR
+      }
+    };
   } finally {
     body = JSON.stringify(body);
   }

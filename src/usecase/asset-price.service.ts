@@ -1,8 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { ErrorCodes } from '../consts/errors.enum';
 import { AssetPriceMongoError, AssetPriceServiceError } from '../errors/asset-price.error';
+import { InvalidParamError } from '../errors/generic.error';
 import { AssetPriceEntity } from '../types/entities/asset-price.entity';
 import { IAssetPriceRepo } from '../types/repositories/asset-price.repo';
+import { GetAssetPricesRequestDto, GetAssetPricesRequestScheme } from '../types/requests/asset-price.request';
 
 export class AssetPriceService {
   assetPriceRepo: IAssetPriceRepo;
@@ -11,12 +13,21 @@ export class AssetPriceService {
     this.assetPriceRepo = assetPriceRepo;
   }
 
-  async getAssetPricesByTickers(tickers: string[]): Promise<{ [ticker: string]: AssetPriceEntity }> {
-    console.log('get asset prices by tickers', tickers);
+  async getAssetPricesByTickers(reqs: GetAssetPricesRequestDto): Promise<{ [ticker: string]: AssetPriceEntity }> {
+    const joi = GetAssetPricesRequestScheme.validate(reqs);
+    if (joi.error) {
+      throw new InvalidParamError(
+        joi.error.message,
+        ErrorCodes.SERVICE_SEARCH_ASSET_PRICES_FAILED,
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    console.log('get asset prices by tickers', reqs.tickers);
 
     try {
       const prices = await this.assetPriceRepo.searchAssetPrices(
-        { deleted: false, enabled: true, ticker: { $in: tickers } },
+        { deleted: false, enabled: true, ticker: { $in: reqs.tickers } },
         { enabled: 0, deleted: 0, createdAt: 0, updatedAt: 0 }
       );
 

@@ -1,8 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { ErrorCodes } from '../consts/errors.enum';
 import { AssetSectorMongoError, AssetSectorServiceError } from '../errors/asset-sector.error';
+import { InvalidParamError } from '../errors/generic.error';
 import { SectorDetails } from '../types/entities/asset-sector.entity';
 import { IAssetSectorRepo } from '../types/repositories/asset-sector.repo';
+import { GetAssetSectorsRequestDto, GetAssetSectorsRequestScheme } from '../types/requests/asset-sector.request';
 
 export class AssetSectorService {
   assetSectorRepo: IAssetSectorRepo;
@@ -11,12 +13,21 @@ export class AssetSectorService {
     this.assetSectorRepo = assetSectorRepo;
   }
 
-  async getAssetSectorsByTickers(tickers: string[]): Promise<{ [ticker: string]: SectorDetails[] }> {
-    console.log('get asset sectors by tickers', tickers);
+  async getAssetSectorsByTickers(reqs: GetAssetSectorsRequestDto): Promise<{ [ticker: string]: SectorDetails[] }> {
+    const joi = GetAssetSectorsRequestScheme.validate(reqs);
+    if (joi.error) {
+      throw new InvalidParamError(
+        joi.error.message,
+        ErrorCodes.SERVICE_SEARCH_ASSET_SECTORS_FAILED,
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    console.log('get asset sectors by tickers', reqs.tickers);
 
     try {
       const sectors = await this.assetSectorRepo.searchAssetSectors(
-        { deleted: false, enabled: true, ticker: { $in: tickers } },
+        { deleted: false, enabled: true, ticker: { $in: reqs.tickers } },
         { enabled: 0, deleted: 0, createdAt: 0, updatedAt: 0 }
       );
 

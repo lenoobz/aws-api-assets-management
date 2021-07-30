@@ -1,8 +1,10 @@
 import { StatusCodes } from 'http-status-codes';
 import { ErrorCodes } from '../consts/errors.enum';
 import { AssetMongoError, AssetServiceError } from '../errors/asset.error';
+import { InvalidParamError } from '../errors/generic.error';
 import { AssetDetailsEntity, AssetEntity } from '../types/entities/asset.entity';
 import { IAssetRepo } from '../types/repositories/asset.repo';
+import { GetAssetDetailsRequestDto, GetAssetDetailsRequestScheme } from '../types/requests/asset.request';
 
 export class AssetService {
   assetRepo: IAssetRepo;
@@ -36,12 +38,17 @@ export class AssetService {
     }
   }
 
-  async getAssetDetailsByTickers(tickers: string[]): Promise<{ [ticker: string]: AssetDetailsEntity }> {
-    console.log('get asset details by tickers', tickers);
+  async getAssetDetailsByTickers(reqs: GetAssetDetailsRequestDto): Promise<{ [ticker: string]: AssetDetailsEntity }> {
+    const joi = GetAssetDetailsRequestScheme.validate(reqs);
+    if (joi.error) {
+      throw new InvalidParamError(joi.error.message, ErrorCodes.SERVICE_SEARCH_ASSETS_FAILED, StatusCodes.BAD_REQUEST);
+    }
+
+    console.log('get asset details by tickers', reqs.tickers);
 
     try {
       const assets = await this.assetRepo.searchAssets(
-        { deleted: false, enabled: true, ticker: { $in: tickers } },
+        { deleted: false, enabled: true, ticker: { $in: reqs.tickers } },
         { enabled: 0, deleted: 0, createdAt: 0, updatedAt: 0 }
       );
 
