@@ -1,4 +1,4 @@
-import { connect, Db, MongoClient, MongoClientOptions } from 'mongodb';
+import { Db, MongoClient, MongoClientOptions } from 'mongodb';
 import { AppConf } from '../../../../config/app.config';
 
 let client: MongoClient;
@@ -20,26 +20,14 @@ const getMongoClient = async (): Promise<MongoClient> => {
     clientOptions.maxIdleTimeMS = mongo.maxIdleTimeMS;
   }
 
-  clientOptions.useNewUrlParser = true;
-  clientOptions.useUnifiedTopology = true;
-
-  return await connect(cxnString, clientOptions);
+  client = new MongoClient(cxnString, clientOptions);
+  return await client.connect();
 };
 
 export const getClientDb = async (dbName: string): Promise<Db> => {
-  if (!client || !client.isConnected()) {
+  if (!client) {
     client = await getMongoClient();
   }
 
   return client.db(dbName);
-};
-
-export const disconnect = async (): Promise<void> => {
-  try {
-    if (client?.isConnected()) {
-      await client.close();
-    }
-  } catch (e) {
-    console.error('[ERROR] unable to close database connection', e);
-  }
 };
