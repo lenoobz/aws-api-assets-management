@@ -1,6 +1,7 @@
 export type AssetCountryEntity = {
   ticker: string;
   assetClass?: string;
+  countries?: CountryDetails[];
 };
 
 export type CountryDetails = {

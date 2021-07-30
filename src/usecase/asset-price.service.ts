@@ -11,14 +11,22 @@ export class AssetPriceService {
     this.assetPriceRepo = assetPriceRepo;
   }
 
-  async getAssetPricesByTickers(tickers: string[]): Promise<AssetPriceEntity[]> {
+  async getAssetPricesByTickers(tickers: string[]): Promise<{ [ticker: string]: AssetPriceEntity }> {
     console.log('get asset prices by tickers', tickers);
 
     try {
-      return await this.assetPriceRepo.searchAssetPrices(
+      const prices = await this.assetPriceRepo.searchAssetPrices(
         { deleted: false, enabled: true, ticker: { $in: tickers } },
         { enabled: 0, deleted: 0, createdAt: 0, updatedAt: 0 }
       );
+
+      const resp: { [ticker: string]: AssetPriceEntity } = {};
+
+      prices.forEach((price) => {
+        resp[price.ticker] = price;
+      });
+
+      return resp;
     } catch (error) {
       console.error('get asset prices by tickers failed', error.message);
 
