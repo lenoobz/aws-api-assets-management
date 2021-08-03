@@ -26,6 +26,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event: APIGatewayProxyEv
       const assetMongo = new AssetMongo();
       const assetService = new AssetService(assetMongo);
       body = await assetService.getAssets();
+    } else if (routeKey === 'GET /v1/assets/{ticker}') {
+      const assetMongo = new AssetMongo();
+      const assetService = new AssetService(assetMongo);
+      body = await assetService.getAssetsByTicker(event.pathParameters.ticker);
     } else if (routeKey === 'POST /v1/assets/details') {
       const assetMongo = new AssetMongo();
       const assetService = new AssetService(assetMongo);

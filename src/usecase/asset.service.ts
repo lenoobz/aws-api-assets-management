@@ -13,6 +13,37 @@ export class AssetService {
     this.assetRepo = assetRepo;
   }
 
+  escapeRegex(text: string): string {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+  }
+
+  async getAssetsByTicker(ticker: string): Promise<AssetEntity[]> {
+    console.log('get assets by ticker', ticker);
+
+    const regexTicker = new RegExp(this.escapeRegex(ticker), 'gi');
+
+    try {
+      const assets = await this.assetRepo.searchAssets(
+        { ticker: regexTicker, deleted: false, enabled: true },
+        { enabled: 0, deleted: 0, createdAt: 0, updatedAt: 0 }
+      );
+
+      return assets.map((asset) => ({ ticker: asset.ticker, name: asset.name }));
+    } catch (error) {
+      console.error('get assets by ticker failed', error.message);
+
+      if (error instanceof AssetMongoError) {
+        throw error;
+      }
+
+      throw new AssetServiceError(
+        error.message,
+        ErrorCodes.SERVICE_SEARCH_ASSETS_FAILED,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   async getAssets(): Promise<AssetEntity[]> {
     console.log('get assets');
 
